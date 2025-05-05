@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazing Maze</title>
+    <meta name="description" content="Explore mazes using BFS and DFS algorithms.">
+    <meta name="author" content="Rafael Aznar">
+    <meta name="robots" content="index, follow">
+    <link rel="icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3ERM%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Reset */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Variables */
+        :root {
+            --primary-color: #3498db;
+            /* Blue */
+            --primary-dark: #2980b9;
+            --secondary-color: #e67e22;
+            /* Orange */
+            --secondary-dark: #d35400;
+            --text-color: #2c3e50;
+            /* Dark gray */
+            --text-light: #7f8c8d;
+            --background: #ecf0f1;
+            /* Light gray */
+            --white: #ffffff;
+            --hot-yellow: #f1c40f;
+            --hot-green: #2ecc71;
+            --hot-red: #e74c3c;
+            --hot-blue: #3498db;
+
+            --maze-wall-color: black;
+            --maze-path-color: white;
+            --maze-start-color: lightblue;
+            --maze-end-color: lightgreen;
+            --maze-explored-color: yellow;
+            --maze-backtrack-color: lightblue;
+            --maze-current-color: lightsalmon;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- General Styles --- */
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 0.5em;
+            font-size: 2.5em;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+        }
+
+        h2 {
+            color: var(--text-light);
+            text-align: center;
+            margin-bottom: 1em;
+            font-size: 1.2em;
+            font-weight: normal;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 95%;
+            max-width: 1200px;
+            margin-top: 1em;
+        }
+
+        .settings-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 1.5em;
+            width: 100%;
+            gap: 1em;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .settings-group {
+                flex-direction: column;
+            }
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 1em;
+            margin-bottom: 0;
+        }
+
+        .control-group label {
+            margin-bottom: 0.5em;
+            color: var(--text-color);
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        /* --- Range Slider Styles --- */
+        input[type="range"] {
+
+            width: 200px;
+            height: 30px;
+            border-radius: 5px;
+            background: var(--background);
+            outline: none;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+
+        input[type="range"]:focus::-webkit-slider-thumb {
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+
+        input[type="range"]:focus::-moz-range-thumb {
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+
+        /* --- Select Styles --- */
+        #mode_selector {
+            position: relative;
+            user-select: none;
+            flex-grow: 1;
+            min-width: 200px;
+            padding: 0.5em 1em;
+            border: 2px solid #c5c5c5;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        #mode_selector:hover,
+        #mode_selector:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        /* --- Button Styles --- */
+        .button-group {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5em;
+            width: 100%;
+            gap: 1em;
+            flex-wrap: wrap;
+        }
+
+        .app-button {
+            padding: 0.75em 1.5em;
+            border: none;
+            border-radius: 5px;
+            color: var(--white);
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            width: 150px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .app-button:hover {
+            filter: brightness(110%);
+        }
+
+        .app-button:disabled {
+            background-color: #bdc3c7;
+            /* Gray */
+            cursor: not-allowed;
+            opacity: 0.6;
+            box-shadow: none;
+        }
+
+        .app-button.hot-yellow {
+            background-color: var(--hot-yellow);
+        }
+
+        .app-button.hot-yellow:hover {
+            background-color: #f0b207;
+        }
+
+        .app-button.hot-green {
+            background-color: var(--hot-green);
+        }
+
+        .app-button.hot-green:hover {
+            background-color: #27ae60;
+        }
+
+        .app-button.hot-red {
+            background-color: var(--hot-red);
+        }
+
+        .app-button.hot-red:hover {
+            background-color: #c0392b;
+        }
+
+        .app-button.hot-blue {
+            background-color: var(--hot-blue);
+        }
+
+        .app-button.hot-blue:hover {
+            background-color: #217dbb;
+        }
+
+        /* --- Maze Styles --- */
+        #maze {
+            /* border: 2px solid #34495e; */
+            /* Dark gray border */
+            margin-bottom: 2em;
+            background-color: var(--maze-path-color);
+            /* width and height will be set in JS to ensure square */
+        }
+
+        @media (max-width: 768px) {
+            #maze {
+                width: 95%;
+                height: auto;
+                aspect-ratio: 1 / 1;
+            }
+        }
+
+        .line {
+            width: 30%;
+            height: 3px;
+            background-color: var(--text-light);
+            margin: 0.5em 0;
+        }
+
+        .footer {
+            margin: 1em 0 3em 0;
+            text-align: center;
+            font-size: 1.3em;
+            color: var(--text-light);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 id="main_title">Amazing Maze</h1>
+        <h2 id="subtitle">Learn BFS & DFS</h2>
+
+        <div class="settings-group" id="settings_group">
+            <div class="control-group">
+                <label for="height_slider">Maze dimension</label>
+                <input type="range" id="height_slider" min="35" max="95" value="45" step="10">
+                <span id="height_value">550 sq</span>
+            </div>
+            <div class="control-group">
+                <label for="mode_selector">Search mode</label>
+                <div id="mode_selector_options">
+                    <select id="mode_selector">
+                        <option value="flood">FLOOD</option>
+                        <option value="bfs">BFS</option>
+                        <option value="dfs">DFS</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-group">
+                <label for="speed_slider">Speed</label>
+                <input type="range" id="speed_slider" min="1" max="1001" value="1" step="100">
+                <span id="speed_value">1 ms</span>
+            </div>
+
+
+
+        </div>
+
+        <div class="button-group" id="button_group">
+            <button class="app-button hot-yellow" id="maze_creation_button">Create maze</button>
+            <button class="app-button hot-green" id="start_button" disabled>Start</button>
+            <button class="app-button hot-red" id="stop_button" disabled>Stop</button>
+            <button class="app-button hot-blue" id="reset_search_button" disabled>Reset search</button>
+            <button class="app-button hot-blue" id="reset_button" disabled>Reset</button>
+        </div>
+
+        <canvas id="maze"></canvas>
+
+        <div id="results_pane"
+            style="display:flex;flex-direction: row; flex-wrap: wrap;align-items: flex-start;flex-wrap: nowrap;height: fit-content;width: 100%;">
+            <div style="margin:0 5px; background-color: #bdc3c7;padding: 10px; border-radius: 5px;width: fit-content">
+                <h2 style="color:#747474">Solution Length:</h2>
+                <h1 id="solution_length_number" style="font-size: 4em !important;color: #3498db;"></h1>
+            </div>
+            <div style="margin:0 5px; background-color: #bdc3c7;padding: 10px; border-radius: 5px;width: fit-content">
+                <h2 style="color:#747474">Solution Length:</h2>
+                <h1 id="solution_explored" style="font-size: 4em !important;color: #3498db;"></h1>
+            </div>
+        </div>
+
+        <!-- line -->
+        <div class="line"></div>
+        <div class="footer">
+            <p>Created by Rafael Aznar (MIT License)</p>
+            <p>github: </p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Get HTML Elements ---
+            const mazeCanvas = document.getElementById('maze');
+            const heightSlider = document.getElementById('height_slider');
+            const heightValueDisplay = document.getElementById('height_value');
+            const speedSlider = document.getElementById('speed_slider');
+            const speedValueDisplay = document.getElementById('speed_value');
+            const modeSelector = document.getElementById('mode_selector');
+            const modeSelectorWrapper = document.getElementById('mode_selector_wrapper');
+            const modeSelectorTrigger = document.getElementById('mode_selector_trigger');
+            const modeSelectorOptions = document.getElementById('mode_selector_options');
+            const mazeCreationButton = document.getElementById('maze_creation_button');
+            const startButton = document.getElementById('start_button');
+            const stopButton = document.getElementById('stop_button');
+            const resetButton = document.getElementById('reset_button');
+            const resetSearchButton = document.getElementById('reset_search_button');
+            const container = document.querySelector('.container');
+            //
+            document.getElementById("results_pane").style.display = "none";
+
+            // --- Constants ---
+            const WALL_COLOR = 'black';         //0
+            const PATH_COLOR = 'white';         //1
+            const START_COLOR = 'cyan';         //2
+            const END_COLOR = 'lightgreen';          //3
+            const EXPLORED_COLOR = 'yellow';    //4
+            const BACKTRACK_COLOR = 'pink';     //5
+            const CURRENT_COLOR = 'purple';     //6
+            const SOLUTION_COLOR = 'red';       //7
+            const BORDER_COLOR = 'lightblue';   //8
+            //
+            const CELL_SIZE = 10;
+
+
+
+            // --- Global Variables ---
+            let maze = [];
+            let canvasWidth = parseInt(heightSlider.value * CELL_SIZE);
+            let canvasHeight = parseInt(heightSlider.value * CELL_SIZE);
+            let speed = parseInt(speedSlider.value);
+            let mode = modeSelector.value;  // 'bfs' or 'dfs'
+            let isSearching = false;
+            let animationFrameId;
+            let startCell;
+            let endCell;
+
+            // --- Canvas Setup ---
+            const ctx = mazeCanvas.getContext('2d');
+            mazeCanvas.width = canvasWidth;
+            mazeCanvas.height = canvasHeight;
+
+            // --- Functions ---
+
+
+
+            /**
+              * Generates a maze using Fractal Tessellation algorithm.
+              * @param {number[][]} maze - The maze grid to modify.
+              * @param {number} rows - Number of rows in the maze.
+              * @param {number} cols - Number of columns in the maze.
+              */
+            function generateMaze() {
+
+                let rows = Math.floor(ctx.canvas.width / CELL_SIZE);
+                let cols = Math.floor(ctx.canvas.height / CELL_SIZE);
+                //if rows is even, add 1
+                if (rows % 2 === 0) {
+                    rows--;
+                }
+                //if cols is even, add 1
+                if (cols % 2 === 0) {
+                    cols--;
+                }
+
+
+
+                // Create initial 3x3 maze
+                maze = [
+                    [0, 0],
+                    [0, 1]
+                ];
+
+                // Initialize the rest of the maze with the initial 2x2 maze
+                for (let i = 0; i < 2; i++) {
+                    for (let j = 2; j < cols; j++) {
+                        maze[i].push(maze[i % 2][j % 2]);
+                    }
+                }
+                for (let i = 2; i < rows; i++) {
+                    maze.push([]);
+                    for (let j = 0; j < cols; j++) {
+                        maze[i].push(maze[i % 2][j % 2]);
+                    }
+                }
+
+                // close the maze
+                maze.forEach(element => {
+                    element[element.length - 1] = 0;
+                });
+
+                maze[maze.length - 1].fill(0);
+
+
+
+
+
+                // for every 2x2 cell in the maze
+                for (let i = 0; i < maze.length; i++) {
+                    for (let j = 0; j < maze[i].length; j++) {
+                        if (i !== 0 && j !== 0 && i !== maze.length - 1 && j !== maze[i].length - 1) {
+                            // si alrededor de i,j hay muchas paredes entonces no se pone una pared
+
+                            let WALL_PROBABILITY = 25 - countWallsAround(i, j, 2);
+
+                            if (i % 2 === 1) {
+                                if (Math.floor(Math.random() * 25) > WALL_PROBABILITY) {
+                                    maze[i][j] = 1;
+                                }
+                            }
+                            if (j % 2 === 1) {
+                                if (Math.floor(Math.random() * 25) > WALL_PROBABILITY) {
+                                    maze[i][j] = 1; // 1 means no wall
+                                }
+                            }
+
+                        }
+                    }
+                }
+
+            }
+
+            function countWallsAround(i, j, d) {
+                let walls = 0;
+                for (let x = i - d; x <= i + d; x++) {
+                    for (let y = j - d; y <= j + d; y++) {
+                        if (x >= 0 && x < maze.length && y >= 0 && y < maze[x].length) {
+                            if (maze[x][y] === 0) {
+                                walls++;
+                            }
+                        }
+                    }
+                }
+                return walls;
+            }
+
+            function generateOddRandomNumber(min, max) {
+                num = Math.floor(Math.random() * (maze[0].length - 1));
+                while (num % 2 === 0) {
+                    num = Math.floor(Math.random() * (maze[0].length - 1));
+                }
+                return num;
+            }
+
+            function createEntryPoints() {
+                let entryx, entryy, exitx, exity;
+                // choose a random number between 0 and 12
+                let random = Math.floor(Math.random() * 4);
+                console.log(random);
+                switch (random) {
+                    case 0:
+                        entryx = 0;
+                        entryy = generateOddRandomNumber(0, maze.length - 1);
+                        exitx = maze.length - 1;
+                        exity = generateOddRandomNumber(0, maze[0].length - 1);
+                        break;
+                    case 1:
+                        entryx = generateOddRandomNumber(0, maze.length - 1);
+                        entryy = 0;
+                        exitx = generateOddRandomNumber(0, maze.length - 1);
+                        exity = maze[0].length - 1;
+                        break;
+                    case 2:
+                        entryx = generateOddRandomNumber(0, maze.length - 1);
+                        entryy = maze[0].length - 1;
+                        exitx = generateOddRandomNumber(0, maze[0].length - 1);
+                        exity = 0;
+                        break;
+                    case 3:
+                        entryx = maze.length - 1;
+                        entryy = generateOddRandomNumber(0, maze[0].length - 1);
+                        exitx = 0;
+                        exity = generateOddRandomNumber(0, maze.length - 1);
+                        break;
+                }
+                console.log(entryx, entryy, exitx, exity);
+                maze[entryx][entryy] = 2; // 2 means start
+                maze[exitx][exity] = 3; // 3 means end
+                makeSolvable(maze, entryx, entryy, exitx, exity);
+            }
+
+            function makeSolvable(maze, entryx, entryy, exitx, exity) {
+                //repeat until maze is solvable
+                let isSolvable = isMazeSolvable(maze, entryx, entryy, exitx, exity);
+                while (!isSolvable) {
+                    // take a random cell in the maze that is not in the borders of the maze
+                    const randomRow = Math.floor(Math.random() * (maze.length - 2)) + 1;
+                    const randomCol = Math.floor(Math.random() * (maze[0].length - 2)) + 1;
+
+                    // Randomly remove walls
+                    if (maze[randomRow][randomCol] === 0) {
+                        // if the cell is 101, make it 1
+                        if (maze[randomRow - 1][randomCol] === 1 || maze[randomRow + 1][randomCol] === 1) {
+                            maze[randomRow][randomCol] = 1;
+                        } else {
+                            if (maze[randomRow][randomCol - 1] === 1 || maze[randomRow][randomCol + 1] === 1) {
+                                maze[randomRow][randomCol] = 1;
+                            }
+                        }
+                        maze[randomRow][randomCol] = 1;
+                    }
+                    // Check if the maze is solvable
+                    isSolvable = isMazeSolvable(maze, entryx, entryy, exitx, exity);
+                }
+            }
+
+            /**
+             * Checks if the maze is solvable using BFS
+             * @param {number[][]} maze The maze grid.
+             * @param {number} startRow The starting row.
+             * @param {number} startCol The starting column.
+             * @param {number} endRow The ending row.
+             * @param {number} endCol The ending column.
+             * @returns boolean
+             */
+            function isMazeSolvable(maze, startRow, startCol, endRow, endCol) {
+                const rows = maze.length;
+                const cols = maze[0].length;
+                const queue = [{ row: startRow, col: startCol }];
+                const visited = Array(rows).fill(null).map(() => Array(cols).fill(false));
+
+                visited[startRow][startCol] = true;
+
+                while (queue.length > 0) {
+                    const { row, col } = queue.shift();
+
+                    if (row === endRow && col === endCol) {
+                        return true; // Path found
+                    }
+
+                    const neighbors = [
+                        { row: row - 1, col: col },
+                        { row: row + 1, col: col },
+                        { row: row, col: col - 1 },
+                        { row: row, col: col + 1 },
+                    ];
+
+                    for (let neighbor of neighbors) {
+                        const { row: nextRow, col: nextCol } = neighbor;
+                        if (isValidCell(nextRow, nextCol, maze) && !visited[nextRow][nextCol]) {
+                            visited[nextRow][nextCol] = true;
+                            queue.push({ row: nextRow, col: nextCol });
+                        }
+                    }
+                }
+                return false; // No path found
+            }
+
+
+
+            /**
+             * Dibuja el laberinto en el canvas.
+             * @param {number[][]} maze - La cuadrícula del laberinto a dibujar.
+             * @param {CanvasRenderingContext2D} ctx - El contexto de renderizado del canvas.
+             * @param {number} cellSize - El tamaño de cada celda en píxeles.
+             */
+            function drawMaze(maze, ctx) {
+                const cellSize = CELL_SIZE;
+                const rows = maze.length;
+                const cols = maze[0].length;
+
+                //while (ctx.firstChild) {
+                //    ctx.firstChild.remove();
+                //}
+
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // Limpia el canvas
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        switch (maze[i][j]) {
+                            case 0: // Muro
+                                ctx.fillStyle = WALL_COLOR;
+                                break;
+                            case 1: // Camino
+                                ctx.fillStyle = PATH_COLOR;
+                                break;
+                            case 2: // Inicio
+                                ctx.fillStyle = START_COLOR;
+                                //ctx.strokeStyle = START_COLOR; // Borde doble
+                                //ctx.lineWidth = 5;
+                                break;
+                            case 3: // Fin
+                                ctx.fillStyle = END_COLOR;
+                                //ctx.strokeStyle = END_COLOR;  // Borde doble
+                                //ctx.lineWidth = 2;
+                                break;
+                            case 4: // Explorado
+                                ctx.fillStyle = EXPLORED_COLOR;
+                                break;
+                            case 5: // Retroceso
+                                ctx.fillStyle = BACKTRACK_COLOR;
+                                break;
+                            case 6: // Actual
+                                ctx.fillStyle = CURRENT_COLOR;
+                                break;
+                            case 7: // Solucion
+                                ctx.fillStyle = SOLUTION_COLOR;
+                                break;
+                            case 8: // exploring border
+                                ctx.fillStyle = BORDER_COLOR;
+                                break;
+                        }
+                        ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+                        /*
+                        if (maze[i][j] === 2 || maze[i][j] === 3) { // Dibuja borde doble.
+                            ctx.strokeRect(j * cellSize, i * cellSize, cellSize, cellSize);
+                        }
+                            */
+                    }
+                }
+            }
+
+            /**
+             * Verifica si una celda es válida (dentro de los límites y es un camino).
+             * @param {number} row - La fila de la celda.
+             * @param {number} col - La columna de la celda.
+             * @param {number[][]} maze - La cuadrícula del laberinto.
+             * @returns {boolean} Verdadero si la celda es válida, falso en caso contrario.
+             */
+            function isValidCell(row, col, maze) {
+                const rows = maze.length;
+                const cols = maze[0].length;
+                return row >= 0 && row < rows && col >= 0 && col < cols && (maze[row][col] === 1 || maze[row][col] === 3);
+            }
+
+            /**
+              * Resuelve el laberinto usando la Búsqueda en Anchura (BFS).
+              * @param {number[][]} maze - La cuadrícula del laberinto a resolver.
+              * @param {number} startRow - La fila de inicio.
+              * @param {number} startCol - La columna de inicio.
+              * @param {number} endRow - La fila de fin.
+              * @param {number} endCol - La columna de fin.
+              * @param {number} speed - La velocidad de la animación de búsqueda en milisegundos.
+              */
+            function solveMazeFLOOD(maze, startRow, startCol, endRow, endCol, speed) {
+                const rows = maze.length;
+                const cols = maze[0].length;
+                const queue = [{ row: startRow, col: startCol, path: [{ row: startRow, col: startCol }] }];
+                //const visited = Array(rows).fill(null).map(() => Array(cols).fill(false));
+                //visited[startRow][startCol] = true;
+                function animateSearch() {
+                    // condición de parada
+                    if (queue.length === 0 || isSearching === false) {
+                        maze[startRow][startCol] = 2;
+                        maze[endRow][endCol] = 3;
+                        drawMaze(maze, ctx, CELL_SIZE);
+                        startButton.disabled = false;
+                        stopButton.disabled = true;
+                        resetButton.disabled = false;
+                        resetSearchButton.disabled = false;
+                        if (isSearching) {
+                            isSearching = false;
+                            alert("¡Camino no encontrado!");
+                        }
+
+                    } else {
+
+                        const { row, col, path } = queue.shift();
+
+                        if (row !== startRow || col !== startCol) {
+                            maze[row][col] = 6;  // Marca la celda actual
+                        }
+
+                        drawMaze(maze, ctx);
+
+                        if (row === endRow && col === endCol) {
+                            // Se ha encontrado el final
+                            for (let p of path) {
+                                if (p.row !== startRow || p.col !== startCol) {
+                                    if (p.row !== endRow || p.col !== endCol) {
+                                        maze[p.row][p.col] = 7; // Marca el camino encontrado
+                                    }
+                                }
+
+                            }
+                            maze[startRow][startCol] = 2;
+                            maze[endRow][endCol] = 3;
+                            drawMaze(maze, ctx, CELL_SIZE);
+                            isSearching = false;
+                            startButton.disabled = false;
+                            stopButton.disabled = true;
+                            resetButton.disabled = false;
+                            resetSearchButton.disabled = false;
+                            alert("¡Camino encontrado!");
+                        } else {
+
+                            const neighbors = [
+                                { row: row - 1, col: col }, // Arriba
+                                { row: row + 1, col: col }, // Abajo
+                                { row: row, col: col - 1 }, // Izquierda
+                                { row: row, col: col + 1 }, // Derecha
+                            ];
+
+                            for (const neighbor of neighbors) {
+                                const { row: nextRow, col: nextCol } = neighbor;
+                                if (isValidCell(nextRow, nextCol, maze)) {
+                                    const newPath = [...path, { row: nextRow, col: nextCol }];
+                                    queue.push({ row: nextRow, col: nextCol, path: newPath });
+                                    maze[nextRow][nextCol] = 8;
+                                }
+                            }
+                            if (row !== startRow || col !== startCol) {
+                                maze[row][col] = 4;
+                            }
+                            animationFrameId = setTimeout(animateSearch, speed);
+                        }
+                    }
+                }
+                animateSearch();
+            }
+
+
+
+            /**
+             * Resuelve el laberinto usando la Búsqueda en Profundidad (DFS).
+             * @param {number[][]} maze - La cuadrícula del laberinto.
+             * @param {number} startRow - Fila de inicio.
+             * @param {number} startCol - Columna de inicio.
+             * @param {number} endRow - Fila de fin.
+             * @param {number} endCol - Columna de fin.
+             * @param {number} speed - Velocidad de la animación en milisegundos.
+             */
+            function solveMazeDFS3(maze, startRow, startCol, endRow, endCol, speed) {
+                const rows = maze.length;
+                const cols = maze[0].length;
+                const stack = [{ row: startRow, col: startCol, path: [{ row: startRow, col: startCol }] }];
+                const visited = Array(rows).fill(null).map(() => Array(cols).fill(false));
+
+                visited[startRow][startCol] = true;
+                maze[startRow][startCol] = 6; // Marca la celda actual
+
+                function animateSearch() {
+                    if (stack.length === 0 || isSearching === false) {
+                        if (isSearching) {
+                            alert("¡Camino no encontrado!");
+                        }
+                        maze[startRow][startCol] = 2;
+                        drawMaze(maze, ctx, CELL_SIZE);
+                        isSearching = false;
+                        startButton.disabled = false;
+                        stopButton.disabled = true;
+                        resetButton.disabled = false;
+                        resetSearchButton.disabled = false;
+                        return;
+                    }
+
+                    const { row, col, path } = stack.pop();
+                    maze[row][col] = 6; // Marca la celda actual
+                    drawMaze(maze, ctx, CELL_SIZE);
+
+                    if (row === endRow && col === endCol) {
+                        // Se ha encontrado el final
+                        maze[startRow][startCol] = 2;
+                        maze[endRow][endCol] = 3;
+                        for (let p of path) {
+                            maze[p.row][p.col] = 4; // Marca el camino
+                        }
+                        drawMaze(maze, ctx, CELL_SIZE);
+                        isSearching = false;
+                        startButton.disabled = false;
+                        stopButton.disabled = true;
+                        resetButton.disabled = false;
+                        resetSearchButton.disabled = false;
+                        alert("¡Camino encontrado!");
+                        return;
+                    }
+
+                    const neighbors = [
+                        { row: row - 1, col: col }, // Arriba
+                        { row: row + 1, col: col }, // Abajo
+                        { row: row, col: col - 1 }, // Izquierda
+                        { row: row, col: col + 1 }, // Derecha
+                    ];
+
+                    // if all neighbors are walls, or visited cells, or backtrack cells, backtrack
+                    let allWalls = true;
+                    for (const neighbor of neighbors) {
+                        const { row: nextRow, col: nextCol } = neighbor;
+                        if (isValidCell(nextRow, nextCol, maze) && !visited[nextRow][nextCol]) {
+                            allWalls = false;
+                            break;
+                        }
+                    }
+                    if (allWalls) {
+                        maze[row][col] = 5; // Marca la celda como retroceso
+                        drawMaze(maze, ctx, CELL_SIZE);
+                        if (stack.length === 0) {
+                            isSearching = false;
+                            startButton.disabled = false;
+                            stopButton.disabled = true;
+                            resetButton.disabled = false;
+                            resetSearchButton.disabled = false;
+                            alert("¡Camino no encontrado!");
+                        }
+                    } else {
+                        for (const neighbor of neighbors) {
+                            const { row: nextRow, col: nextCol } = neighbor;
+                            if (isValidCell(nextRow, nextCol, maze) && !visited[nextRow][nextCol]) {
+                                visited[nextRow][nextCol] = true;
+                                const newPath = [...path, { row: nextRow, col: nextCol }];
+                                stack.push({ row: nextRow, col: nextCol, path: newPath });
+                                animationFrameId = setTimeout(animateSearch, speed);
+                                if (isSearching) {
+
+                                    maze[nextRow][nextCol] = 6; // Marca la celda como actual
+                                    drawMaze(maze, ctx, CELL_SIZE);
+
+                                    // if all neighbors are walls, or visited cells, or backtrack cells, backtrack
+                                    let allWalls = true;
+                                    for (const neighbor of neighbors) {
+                                        const { row: nextRow, col: nextCol } = neighbor;
+                                        if (isValidCell(nextRow, nextCol, maze) && !visited[nextRow][nextCol]) {
+                                            allWalls = false;
+                                            break;
+                                        }
+                                    }
+                                    if (allWalls) {
+                                        maze[row][col] = 5; // Marca la celda como retroceso
+                                        drawMaze(maze, ctx, CELL_SIZE);
+                                        if (stack.length === 0) {
+                                            isSearching = false;
+                                            startButton.disabled = false;
+                                            stopButton.disabled = true;
+                                            resetButton.disabled = false;
+                                            resetSearchButton.disabled = false;
+                                            alert("¡Camino no encontrado!");
+                                        }
+                                        break;
+
+                                    }
+
+
+
+                                } else {
+                                    break; // Salir del bucle si se ha detenido la búsqueda
+
+
+                                }
+
+
+                            }
+                        }
+                    }
+
+                }
+                animateSearch();
+            }
+
+
+
+            function solveMazeDFS(maze, startRow, startCol, endRow, endCol, speed) {
+                const rows = maze.length;
+                const cols = maze[0].length;
+                const queue = [{ row: startRow, col: startCol, path: [{ row: startRow, col: startCol }] }];
+                //const visited = Array(rows).fill(null).map(() => Array(cols).fill(false));
+                //visited[startRow][startCol] = true;
+                function animateSearch() {
+                    // condición de parada
+                    if (queue.length === 0 || isSearching === false) {
+                        maze[startRow][startCol] = 2;
+                        maze[endRow][endCol] = 3;
+                        drawMaze(maze, ctx, CELL_SIZE);
+                        startButton.disabled = false;
+                        stopButton.disabled = true;
+                        resetButton.disabled = false;
+                        resetSearchButton.disabled = false;
+                        if (isSearching) {
+                            isSearching = false;
+                            alert("¡Camino no encontrado!");
+                        }
+
+                    } else {
+
+                        const { row, col, path } = queue.pop();
+
+                        if (row !== startRow || col !== startCol) {
+                            maze[row][col] = 6;  // Marca la celda actual
+                        }
+
+                        drawMaze(maze, ctx);
+
+                        if (row === endRow && col === endCol) {
+                            // Se ha encontrado el final
+                            for (let p of path) {
+                                if (p.row !== startRow || p.col !== startCol) {
+                                    if (p.row !== endRow || p.col !== endCol) {
+                                        maze[p.row][p.col] = 7; // Marca el camino encontrado
+                                    }
+                                }
+
+                            }
+                            maze[startRow][startCol] = 2;
+                            maze[endRow][endCol] = 3;
+                            drawMaze(maze, ctx, CELL_SIZE);
+                            isSearching = false;
+                            startButton.disabled = false;
+                            stopButton.disabled = true;
+                            resetButton.disabled = false;
+                            resetSearchButton.disabled = false;
+                            alert("¡Camino encontrado!");
+                        } else {
+
+                            const neighbors = [
+                                { row: row - 1, col: col }, // Arriba
+                                { row: row + 1, col: col }, // Abajo
+                                { row: row, col: col - 1 }, // Izquierda
+                                { row: row, col: col + 1 }, // Derecha
+                            ];
+                            let sinsalida = true;
+                            for (const neighbor of neighbors) {
+                                const { row: nextRow, col: nextCol } = neighbor;
+
+                                if (isValidCell(nextRow, nextCol, maze)) {
+                                    const newPath = [...path, { row: nextRow, col: nextCol }];
+                                    queue.push({ row: nextRow, col: nextCol, path: newPath });
+                                    maze[nextRow][nextCol] = 8;
+                                    animationFrameId = setTimeout(animateSearch, speed);
+                                    sinsalida = false;
+                                }
+                            }
+                            if (sinsalida) {
+                                maze[row][col] = 5;
+                            } else {
+                                if (row !== startRow || col !== startCol) {
+                                    maze[row][col] = 4;
+                                }
+                            }
+
+                        }
+                    }
+                }
+                animateSearch();
+            }
+
+
+            async function recursiveCall(f, maze, startRow, startCol, endRow, endCol, speed) {
+                const result = await f(maze, startRow, startCol, endRow, endCol, speed);
+                console.log(result); // --> 'done!';
+                return result;
+            }
+
+
+            //function solveMazeDFS2(maze, startRow, startCol, endRow, endCol, speed, ctx, CELL_SIZE, drawMaze, startButton, stopButton, resetButton, resetSearchButton) {
+            function solveMazeDFS2(maze, startRow, startCol, endRow, endCol, speed) {
+
+                let animationFrameId = null;
+
+
+                function animateSearch(row, col) {
+                    return new Promise((resolve) => {
+                        if (row === endRow && col === endCol) {
+                            maze[row][col] = 3; // Mark the end as part of the path
+                            drawMaze(maze, ctx, CELL_SIZE);
+                            resolve(1);
+                            return; // Important: Exit the function!
+                        } else {
+                            const neighbors = [
+                                { row: row - 1, col: col }, // Arriba
+                                { row: row + 1, col: col }, // Abajo
+                                { row: row, col: col - 1 }, // Izquierda
+                                { row: row, col: col + 1 }, // Derecha
+                            ];
+                            maze[row][col] = 4; // Mark the current cell as visited/exploring
+                            drawMaze(maze, ctx, CELL_SIZE);
+
+                            function processNeighbors(index) { // Helper function for sequential processing
+                                if (index < neighbors.length) {
+                                    const { row: nextRow, col: nextCol } = neighbors[index];
+                                    if (isValidCell(nextRow, nextCol, maze)) {
+                                        animationFrameId = setTimeout(() => {
+                                            animateSearch(nextRow, nextCol).then(result => {
+                                                if (result > 0) {
+                                                    maze[row][col] = 7; // Mark the current cell as part of the path
+                                                    drawMaze(maze, ctx, CELL_SIZE);
+                                                    resolve(++result);
+                                                } else {
+                                                    maze[row][col] = 5; // Mark the current cell as backtrack
+                                                    drawMaze(maze, ctx, CELL_SIZE);
+                                                    processNeighbors(index + 1); // Continue with the next neighbor
+                                                }
+                                            });
+                                        }, speed);
+                                    } else {
+                                        processNeighbors(index + 1); // Move to the next neighbor if the current one is not valid
+                                    }
+                                } else {
+                                    // After checking all neighbors, if none lead to the solution
+                                    if (!maze.flat().includes(3)) {
+                                        maze[row][col] = 5;
+                                        drawMaze(maze, ctx, CELL_SIZE);
+                                    }
+                                    resolve(0); // No path found from this cell
+                                }
+                            }
+                            processNeighbors(0); // Start processing neighbors
+                        }
+                    });
+                }
+
+                async function startSolving() {
+                    startButton.disabled = true;
+                    stopButton.disabled = false;
+                    resetButton.disabled = true;
+                    resetSearchButton.disabled = true;
+                    const len = await animateSearch(startRow, startCol); // Wait for the search to complete
+                    maze[startRow][startCol] = 2;
+                    maze[endRow][endCol] = 3;
+                    drawMaze(maze, ctx, CELL_SIZE);
+                    startButton.disabled = false;
+                    stopButton.disabled = true;
+                    resetButton.disabled = false;
+                    resetSearchButton.disabled = false;
+                    if (!len && !maze.flat().includes(3)) {
+                        console.log("No solution found.");
+                    } else {
+                        // print la la longitud de la solucion en solution_length
+                        const solutionLength = maze.flat().filter(cell => cell === 7).length;
+                        // show solution length
+                        document.getElementById("solution_length_number").innerText = solutionLength;
+                        document.getElementById("results_pane").style.display = "block";
+                    }
+                }
+
+                startSolving();
+            }
+
+
+            //function solveMazeBFS(maze, startRow, startCol, endRow, endCol, speed, ctx, CELL_SIZE, drawMaze, startButton, stopButton, resetButton, resetSearchButton) {
+            function solveMazeBFS3(maze, startRow, startCol, endRow, endCol, speed) {
+                let animationFrameId = null;
+
+
+
+                function animateSearch() {
+                    return new Promise((resolve) => {
+                        let queue = [{ row: startRow, col: startCol, path: [{ row: startRow, col: startCol }] }];
+                        let visited = { [startRow + ',' + startCol]: true };
+
+                        const exploreNext = () => {
+                            if (queue.length === 0) {
+                                // No solution found
+                                startButton.disabled = false;
+                                stopButton.disabled = true;
+                                resetButton.disabled = false;
+                                resetSearchButton.disabled = false;
+                                resolve(false);
+                                return;
+                            }
+
+                            let { row, col, path } = queue.shift();
+                            maze[row][col] = 8; // Mark as visiting
+                            drawMaze(maze, ctx, CELL_SIZE);
+
+                            if (row === endRow && col === endCol) {
+                                // Solution found!
+                                for (let { row: pathRow, col: pathCol } of path) {
+                                    maze[pathRow][pathCol] = 7; // Mark the path
+                                }
+                                maze[startRow][startCol] = 2;
+                                maze[endRow][endCol] = 3;
+                                drawMaze(maze, ctx, CELL_SIZE);
+                                startButton.disabled = false;
+                                stopButton.disabled = true;
+                                resetButton.disabled = false;
+                                resetSearchButton.disabled = false;
+                                resolve(true);
+                                return;
+                            }
+
+                            const neighbors = [
+                                { row: row - 1, col: col },
+                                { row: row + 1, col: col },
+                                { row: row, col: col - 1 },
+                                { row: row, col: col + 1 },
+                            ];
+
+                            for (const neighbor of neighbors) {
+                                const { row: nextRow, col: nextCol } = neighbor;
+                                if (isValidCell(nextRow, nextCol, maze) && !visited[nextRow + ',' + nextCol]) {
+                                    visited[nextRow + ',' + nextCol] = true;
+                                    queue.push({ row: nextRow, col: nextCol, path: [...path, { row: nextRow, col: nextCol }] });
+                                }
+                            }
+
+                            animationFrameId = setTimeout(exploreNext, speed); // Continue exploring
+                        };
+
+                        exploreNext(); // Start the exploration
+                    });
+                }
+
+                async function startSolving() {
+                    startButton.disabled = true;
+                    stopButton.disabled = false;
+                    resetButton.disabled = true;
+                    resetSearchButton.disabled = true;
+                    maze[startRow][startCol] = 2;
+                    maze[endRow][endCol] = 3;
+                    drawMaze(maze, ctx, CELL_SIZE);
+                    const solved = await animateSearch(); // Wait for the search to complete
+
+                    if (!solved && !maze.flat().includes(3)) {
+                        console.log("No solution found.");
+                        startButton.disabled = false;
+                        stopButton.disabled = true;
+                        resetButton.disabled = false;
+                        resetSearchButton.disabled = false;
+                    }
+                }
+
+                startSolving();
+            }
+
+
+
+            function solveMazeDFS22(maze, startRow, startCol, endRow, endCol, speed) {
+                function animateSearch(row, col, speed) {
+                    if (row === endRow && col === endCol) {
+                        return true;
+                    } else {
+                        const neighbors = [
+                            { row: row - 1, col: col }, // Arriba
+                            { row: row + 1, col: col }, // Abajo
+                            { row: row, col: col - 1 }, // Izquierda
+                            { row: row, col: col + 1 }, // Derecha
+                        ];
+                        let allWalls = true;
+                        for (const neighbor of neighbors) {
+                            const { row: nextRow, col: nextCol } = neighbor;
+                            if (isValidCell(nextRow, nextCol, maze)) {
+                                allWalls = false;
+                                break;
+                            }
+                        }
+                        //--
+                        if (allWalls) {
+                            if (row === startRow && col === startCol) {
+                                return false;
+                            } else {
+                                maze[row][col] = 5; // Marks the cell as backtrack and ends
+                                drawMaze(maze, ctx, CELL_SIZE);
+                                return false;
+                            }
+                        } else {// no es el final y queda vecindario por explorar
+                            for (const neighbor of neighbors) { // para cada vecino
+                                const { row: nextRow, col: nextCol } = neighbor;
+                                if (isValidCell(nextRow, nextCol, maze)) {
+                                    maze[nextRow][nextCol] = 8;
+                                    drawMaze(maze, ctx, CELL_SIZE);
+                                    let result = false;
+                                    animationFrameId = setTimeout(result = animateSearch(nextRow, nextCol), speed);
+                                    //let result = animateSearch(nextRow, nextCol);
+                                    if (result) {
+                                        maze[nextRow][nextCol] = 7; // Marca el camino encontrado
+                                        drawMaze(maze, ctx, CELL_SIZE);
+                                        return true;
+                                    } else {
+                                        //maze[nextRow][nextCol] = 1; // Marca la celda como camino -> exponencial
+                                        maze[nextRow][nextCol] = 5; // Marca la celda como retroceso                                        
+                                        drawMaze(maze, ctx, CELL_SIZE);
+                                    }
+
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                }
+                animateSearch(startRow, startCol);
+                maze[startRow][startCol] = 2;
+                maze[endRow][endCol] = 3;
+                drawMaze(maze, ctx, CELL_SIZE);
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                resetButton.disabled = false;
+                resetSearchButton.disabled = false;
+            }
+
+
+
+
+
+
+
+            function solveMazeBFS(maze, startRow, startCol, endRow, endCol, speed) {
+                const rows = maze.length;
+                const cols = maze[0].length;
+                const stack = [{ row: startRow, col: startCol, path: [{ row: startRow, col: startCol }] }];
+                const visited = Array(rows).fill(null).map(() => Array(cols).fill(false));
+
+                visited[startRow][startCol] = true;
+                maze[startRow][startCol] = 6; // Marca la celda actual
+
+                function animateSearch() {
+                    if (stack.length === 0 || isSearching === false) {
+                        if (isSearching) {
+                            alert("¡Camino no encontrado!");
+                        }
+                        maze[startRow][startCol] = 2;
+                        drawMaze(maze, ctx, CELL_SIZE);
+                        isSearching = false;
+                        startButton.disabled = false;
+                        stopButton.disabled = true;
+                        resetButton.disabled = false;
+                        resetSearchButton.disabled = false;
+                        return;
+                    }
+
+                    const { row, col, path } = stack.pop();
+                    maze[row][col] = 6; // Marca la celda actual
+                    drawMaze(maze, ctx, CELL_SIZE);
+
+                    if (row === endRow && col === endCol) {
+                        // Se ha encontrado el final
+                        maze[startRow][startCol] = 2;
+                        maze[endRow][endCol] = 3;
+                        for (let p of path) {
+                            maze[p.row][p.col] = 4; // Marca el camino
+                        }
+                        drawMaze(maze, ctx, CELL_SIZE);
+                        isSearching = false;
+                        startButton.disabled = false;
+                        stopButton.disabled = true;
+                        resetButton.disabled = false;
+                        resetSearchButton.disabled = false;
+                        alert("¡Camino encontrado!");
+                        return;
+                    }
+
+                    const neighbors = [
+                        { row: row - 1, col: col }, // Arriba
+                        { row: row + 1, col: col }, // Abajo
+                        { row: row, col: col - 1 }, // Izquierda
+                        { row: row, col: col + 1 }, // Derecha
+                    ];
+
+                    // if all neighbors are walls, or visited cells, or backtrack cells, backtrack
+                    let allWalls = true;
+                    for (const neighbor of neighbors) {
+                        const { row: nextRow, col: nextCol } = neighbor;
+                        if (isValidCell(nextRow, nextCol, maze) && !visited[nextRow][nextCol]) {
+                            allWalls = false;
+                            break;
+                        }
+                    }
+                    if (allWalls) {
+                        maze[row][col] = 5; // Marca la celda como retroceso
+                        drawMaze(maze, ctx, CELL_SIZE);
+                        if (stack.length === 0) {
+                            isSearching = false;
+                            startButton.disabled = false;
+                            stopButton.disabled = true;
+                            resetButton.disabled = false;
+                            alert("¡Camino no encontrado!");
+                        }
+                    } else {
+                        for (const neighbor of neighbors) {
+                            const { row: nextRow, col: nextCol } = neighbor;
+                            if (isValidCell(nextRow, nextCol, maze) && !visited[nextRow][nextCol]) {
+                                visited[nextRow][nextCol] = true;
+                                const newPath = [...path, { row: nextRow, col: nextCol }];
+                                stack.unshift({ row: nextRow, col: nextCol, path: newPath });
+                                animationFrameId = setTimeout(animateSearch, speed);
+                                if (isSearching) {
+
+                                    maze[nextRow][nextCol] = 6; // Marca la celda como actual
+                                    drawMaze(maze, ctx, CELL_SIZE);
+
+                                    // if all neighbors are walls, or visited cells, or backtrack cells, backtrack
+                                    let allWalls = true;
+                                    for (const neighbor of neighbors) {
+                                        const { row: nextRow, col: nextCol } = neighbor;
+                                        if (isValidCell(nextRow, nextCol, maze) && !visited[nextRow][nextCol]) {
+                                            allWalls = false;
+                                            break;
+                                        }
+                                    }
+                                    if (allWalls) {
+                                        maze[row][col] = 5; // Marca la celda como retroceso
+                                        drawMaze(maze, ctx, CELL_SIZE);
+                                        if (stack.length === 0) {
+                                            isSearching = false;
+                                            startButton.disabled = false;
+                                            stopButton.disabled = true;
+                                            resetButton.disabled = false;
+                                            alert("¡Camino no encontrado!");
+                                        }
+                                        break;
+
+                                    }
+
+
+
+                                } else {
+                                    break; // Salir del bucle si se ha detenido la búsqueda
+
+
+                                }
+
+
+                            }
+                        }
+                    }
+
+                }
+                animateSearch();
+            }
+
+
+
+
+
+            /**
+             * Resetea el laberinto y la búsqueda.
+             */
+            function resetMaze() {
+                isSearching = false;
+                clearTimeout(animationFrameId);
+                generateMaze();
+                createEntryPoints();
+                drawMaze(maze, ctx, CELL_SIZE);
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                resetButton.disabled = true;
+                startButton.textContent = "Empezar";
+            }
+
+            // --- Listeners de Eventos ---
+
+            // Cambiar el tamaño del laberinto
+            heightSlider.addEventListener('input', () => {
+                canvasWidth = parseInt(heightSlider.value * CELL_SIZE);
+                canvasHeight = parseInt(heightSlider.value * CELL_SIZE);
+                heightValueDisplay.textContent = `${canvasHeight}`;
+                mazeCanvas.width = canvasWidth;
+                mazeCanvas.height = canvasHeight;
+                resetMaze(); // Re-genera el laberinto al cambiar el tamaño
+            });
+
+            // Cambiar la velocidad de la animación
+            speedSlider.addEventListener('input', () => {
+                speed = parseInt(speedSlider.value);
+                speedValueDisplay.textContent = `${speed}ms`;
+            });
+
+            // Cambiar el algoritmo de búsqueda
+            modeSelector.addEventListener('change', () => {
+                mode = modeSelector.value;
+            });
+
+            // Crear el laberinto
+            mazeCreationButton.addEventListener('click', () => {
+                generateMaze();
+                createEntryPoints();
+                drawMaze(maze, ctx, CELL_SIZE);
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                resetButton.disabled = true;
+                startButton.textContent = "Empezar";
+            });
+
+            // Iniciar la búsqueda del camino
+            startButton.addEventListener('click', () => {
+                if (isSearching) return;
+                // find start cell
+                let startRow = 0;
+                let startCol = 0;
+                let endRow = 0;
+                let endCol = 0;
+
+                let foundStart = false;
+                let foundEnd = false;
+
+                for (let i = 0; i < maze.length; i++) {
+                    for (let j = 0; j < maze[i].length; j++) {
+                        if (maze[i][j] === 2) { // Encuentra la primera celda de camino como inicio
+                            if (!foundStart) {
+                                startRow = i;
+                                startCol = j;
+                                foundStart = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                for (let i = 0; i < maze.length; i++) {
+                    for (let j = 0; j < maze[i].length; j++) {
+                        if (maze[i][j] === 3) {
+                            if (!foundEnd) {
+                                endRow = i;
+                                endCol = j;
+                                foundEnd = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!foundStart || !foundEnd) {
+                    alert("No se pudo encontrar un inicio y un fin válidos en el laberinto.");
+                    return;
+                }
+
+                isSearching = true;
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                resetButton.disabled = true;
+                startButton.textContent = "Buscando...";
+
+                if (mode === 'flood') {
+                    solveMazeFLOOD(maze, startRow, startCol, endRow, endCol, speed);
+                } else {
+                    if (mode === 'bfs') {
+                        solveMazeBFS3(maze, startRow, startCol, endRow, endCol, speed);
+                    } else if (mode === 'dfs') {
+                        solveMazeDFS2(maze, startRow, startCol, endRow, endCol, speed);
+                    }
+                }
+            });
+
+            // Detener la búsqueda
+            stopButton.addEventListener('click', () => {
+                isSearching = false;
+                clearTimeout(animationFrameId);
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                resetButton.disabled = false;
+                startButton.textContent = "Reanudar";
+            });
+
+            resetSearchButton.addEventListener('click', () => {
+                // recorrer el maze y cambiar el color de las celdas que no sean muros a su color original
+                for (let i = 0; i < maze.length; i++) {
+                    for (let j = 0; j < maze[i].length; j++) {
+                        if (maze[i][j] !== 0 && maze[i][j] !== 2 && maze[i][j] !== 3) {
+                            maze[i][j] = 1;
+                        }
+                    }
+                }
+                isSearching = false;
+                clearTimeout(animationFrameId);
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                resetButton.disabled = false;
+                startButton.textContent = "Resolver";
+                drawMaze(maze, ctx, CELL_SIZE);
+            });
+
+            // Resetear el laberinto
+            resetButton.addEventListener('click', () => {
+                resetMaze();
+            });
+
+            // Inicialización
+            resetMaze();
+        });
+    </script>
+</body>
+
+</html>
