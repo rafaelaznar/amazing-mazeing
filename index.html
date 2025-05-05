@@ -355,8 +355,10 @@
             const resetButton = document.getElementById('reset_button');
             const resetSearchButton = document.getElementById('reset_search_button');
             const container = document.querySelector('.container');
-            //
-            document.getElementById("results_pane").style.display = "none";
+            const resultsPane = document.getElementById('results_pane');
+            const solutionLengthNumber = document.getElementById("solution_length_number")
+            // 
+            
 
             // --- Constants ---
             const WALL_COLOR = 'black';         //0
@@ -371,8 +373,6 @@
             //
             const CELL_SIZE = 10;
 
-
-
             // --- Global Variables ---
             let maze = [];
             let canvasWidth = parseInt(heightSlider.value * CELL_SIZE);
@@ -385,7 +385,7 @@
             let endCell;
 
             // --- Canvas Setup ---
-            const ctx = mazeCanvas.getContext('2d');
+            const ctx = mazeCanvas.getContext('2d'); // returns an object that provides methods and properties for drawing on the canvas
             mazeCanvas.width = canvasWidth;
             mazeCanvas.height = canvasHeight;
 
@@ -1065,8 +1065,8 @@
                         // print la la longitud de la solucion en solution_length
                         const solutionLength = maze.flat().filter(cell => cell === 7).length;
                         // show solution length
-                        document.getElementById("solution_length_number").innerText = solutionLength;
-                        document.getElementById("results_pane").style.display = "block";
+                        solutionLengthNumber.innerText = solutionLength;
+                        resultsPane.style.display = "block";
                     }
                 }
 
@@ -1363,6 +1363,7 @@
              * Resetea el laberinto y la búsqueda.
              */
             function resetMaze() {
+                resultsPane.style.display = "none";
                 isSearching = false;
                 clearTimeout(animationFrameId);
                 generateMaze();
