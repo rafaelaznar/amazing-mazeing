@@ -358,7 +358,7 @@
             const resultsPane = document.getElementById('results_pane');
             const solutionLengthNumber = document.getElementById("solution_length_number")
             // 
-            
+
 
             // --- Constants ---
             const WALL_COLOR = 'black';         //0
@@ -672,8 +672,23 @@
                 return row >= 0 && row < rows && col >= 0 && col < cols && (maze[row][col] === 1 || maze[row][col] === 3);
             }
 
+            function setState(initialState = true) {
+                if (initialState) {
+                    startButton.disabled = true;
+                    stopButton.disabled = true;
+                    resetButton.disabled = true;
+                    resetSearchButton.disabled = true;
+                } else {
+                    startButton.disabled = false;
+                    stopButton.disabled = true;
+                    resetButton.disabled = false;
+                    resetSearchButton.disabled = false;
+                }
+            }
+
             /**
-              * Resuelve el laberinto usando la Búsqueda en Anchura (BFS).
+              * Solves maze using BFS algorithm
+              * this approach uses a queue to explore all neighbors of the current cell
               * @param {number[][]} maze - La cuadrícula del laberinto a resolver.
               * @param {number} startRow - La fila de inicio.
               * @param {number} startCol - La columna de inicio.
@@ -681,65 +696,36 @@
               * @param {number} endCol - La columna de fin.
               * @param {number} speed - La velocidad de la animación de búsqueda en milisegundos.
               */
-            function solveMazeFLOOD(maze, startRow, startCol, endRow, endCol, speed) {
-                const rows = maze.length;
-                const cols = maze[0].length;
+            function solveMazeFLOOD(maze, startRow, startCol, endRow, endCol, speed) {                
+                // initilize queue to store the path to the cells that are being explored
                 const queue = [{ row: startRow, col: startCol, path: [{ row: startRow, col: startCol }] }];
-                //const visited = Array(rows).fill(null).map(() => Array(cols).fill(false));
-                //visited[startRow][startCol] = true;
                 function animateSearch() {
-                    // condición de parada
-                    if (queue.length === 0 || isSearching === false) {
-                        maze[startRow][startCol] = 2;
-                        maze[endRow][endCol] = 3;
+                    if (queue.length === 0) { // stop condition: there are no more cells to explore
                         drawMaze(maze, ctx, CELL_SIZE);
-                        startButton.disabled = false;
-                        stopButton.disabled = true;
-                        resetButton.disabled = false;
-                        resetSearchButton.disabled = false;
-                        if (isSearching) {
-                            isSearching = false;
-                            alert("¡Camino no encontrado!");
-                        }
-
+                        setState(false);
+                        alert("¡Camino no encontrado!");
                     } else {
-
-                        const { row, col, path } = queue.shift();
-
-                        if (row !== startRow || col !== startCol) {
-                            maze[row][col] = 6;  // Marca la celda actual
+                        const { row, col, path } = queue.shift(); // get the next cell to explore                        
+                        if (row !== startRow && col !== startCol) { // if the cell is not the initial cell, mark it as explored
+                            maze[row][col] = 6;  // mark the current cell
+                            drawMaze(maze, ctx);
+                        } else {
+                            maze[row][col] = 2; // mark the start cell
+                            drawMaze(maze, ctx, CELL_SIZE);
                         }
-
-                        drawMaze(maze, ctx);
-
-                        if (row === endRow && col === endCol) {
-                            // Se ha encontrado el final
-                            for (let p of path) {
+                        if (row === endRow && col === endCol) { // maze is solved: found the end cell
+                            for (let p of path) { // mark the solution path
                                 if (p.row !== startRow || p.col !== startCol) {
                                     if (p.row !== endRow || p.col !== endCol) {
-                                        maze[p.row][p.col] = 7; // Marca el camino encontrado
+                                        maze[p.row][p.col] = 7; // mark the solution path
                                     }
                                 }
-
                             }
-                            maze[startRow][startCol] = 2;
-                            maze[endRow][endCol] = 3;
                             drawMaze(maze, ctx, CELL_SIZE);
-                            isSearching = false;
-                            startButton.disabled = false;
-                            stopButton.disabled = true;
-                            resetButton.disabled = false;
-                            resetSearchButton.disabled = false;
+                            setState(false);
                             alert("¡Camino encontrado!");
-                        } else {
-
-                            const neighbors = [
-                                { row: row - 1, col: col }, // Arriba
-                                { row: row + 1, col: col }, // Abajo
-                                { row: row, col: col - 1 }, // Izquierda
-                                { row: row, col: col + 1 }, // Derecha
-                            ];
-
+                        } else { // if the cell is not the end cell, explore its neighbors
+                            const neighbors = getNeighbors(row, col);
                             for (const neighbor of neighbors) {
                                 const { row: nextRow, col: nextCol } = neighbor;
                                 if (isValidCell(nextRow, nextCol, maze)) {
@@ -758,7 +744,14 @@
                 animateSearch();
             }
 
-
+            function getNeighbors(row, col) {
+                return [
+                    { row: row - 1, col: col }, // Arriba
+                    { row: row + 1, col: col }, // Abajo
+                    { row: row, col: col - 1 }, // Izquierda
+                    { row: row, col: col + 1 }, // Derecha
+                ];
+            }
 
             /**
              * Resuelve el laberinto usando la Búsqueda en Profundidad (DFS).
