@@ -475,6 +475,7 @@
                         <option value="dfs">DFS - Depth First Search (recursive visual)</option>
                         <option value="dfs_iterative">DFS Iterative</option>
                         <option value="dfs3">DFS Variant 1</option>
+                        <option value="dfs_border">DFS Border-Pref (new)</option>
                         <option value="dfs22">DFS Variant 2 (experimental)</option>
                         <option value="astar">A* - A* (Manhattan)</option>
                         <option value="random">Random Greedy Best-First</option>
@@ -683,6 +684,16 @@
                         '<span class="algo-highlight">Strategy:</span> Stack/visited variant',
                         '<span class="algo-highlight">Memory:</span> Similar to other DFS variants',
                         '<span class="algo-highlight">Best for:</span> Comparing animation/marking differences'
+                    ]
+                },
+                'dfs_border': {
+                    title: 'DFS Border-Pref (new)',
+                    description: 'Depth-first search variant that prefers exploring cells near the maze borders. It biases neighbor ordering toward cells close to the outer edges and cells adjacent to walls to emphasise perimeter exploration before diving deep into the interior.',
+                    features: [
+                        '<span class="algo-highlight">Behavior:</span> Depth-first search with neighbor scoring that favors border-proximate cells',
+                        '<span class="algo-highlight">Exploration bias:</span> Prefers corridors and cells along the maze edges, penalizes deep interior cells',
+                        '<span class="algo-highlight">Path quality:</span> Not guaranteed shortest path — tuned for edge-first exploration',
+                        '<span class="algo-highlight">Best for:</span> Studying how border-biased exploration changes discovered paths and visual patterns'
                     ]
                 },
                 'dfs22': {
@@ -920,6 +931,7 @@
                                     maze[pick.r][pick.c] = 1; // open that neighbor
                                 }
                             } else {
+                                /*
                                 // Additionally, check the 8 surrounding cells (including diagonals).
                                 // If exactly 7 of the 8 neighbors are walls (0), open a random
                                 // orthogonal interior neighbor to avoid near-complete isolation.
@@ -945,6 +957,7 @@
                                         maze[pick2.r][pick2.c] = 1;
                                     }
                                 }
+                                    */
                             }
                         }
                     }
@@ -1389,6 +1402,124 @@
                     }
 
                 }
+                animateSearch();
+            }
+
+            /**
+             * DFS variant that prefers exploring cells along the maze borders.
+             * It still behaves as a depth-first search but sorts neighbors so that
+             * cells adjacent to walls (borders) are explored first.
+             */
+            function solveMazeDFSBorder(maze, startRow, startCol, endRow, endCol, speed) {
+                const rows = maze.length;
+                const cols = maze[0].length;
+                const stack = [{ row: startRow, col: startCol, path: [{ row: startRow, col: startCol }] }];
+                const visited = Array(rows).fill(null).map(() => Array(cols).fill(false));
+
+                visited[startRow][startCol] = true;
+                maze[startRow][startCol] = 6; // current
+
+                function neighborBorderScore(r, c) {
+                    // New scoring: prefer cells close to the outer border and also
+                    // those adjacent to walls. Penalize cells that are far from the
+                    // border by lowering their score. Returns a higher number =>
+                    // higher exploration priority.
+                    let adjScore = 0;
+                    const dirs = [ [-1,0],[1,0],[0,-1],[0,1] ];
+                    for (const [dr, dc] of dirs) {
+                        const nr = r + dr, nc = c + dc;
+                        if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) {
+                            adjScore += 2; // outside grid counts strongly as border
+                        } else if (maze[nr][nc] === 0) {
+                            adjScore += 1; // adjacent to wall
+                        }
+                    }
+
+                    // Distance to nearest border (0 = on border)
+                    const distToBorder = Math.min(r, rows - 1 - r, c, cols - 1 - c);
+                    // Normalize proximity: 1.0 = at border, 0.0 = farthest interior
+                    const maxPossible = Math.max(1, Math.floor(Math.min(rows, cols) / 2));
+                    const proximity = (maxPossible - distToBorder) / maxPossible; // in [0,1]
+
+                    // Aggressive weights: strongly prefer cells near the outer border
+                    // and those adjacent to walls; penalize deep interior cells.
+                    const WEIGHT_ADJ = 6.0;   // emphasize adjacency to walls (corners/corridors)
+                    const WEIGHT_PROX = 16.0; // strongly prefer proximity to outer border
+                    let score = adjScore * WEIGHT_ADJ + proximity * WEIGHT_PROX;
+
+                    // Larger penalty for cells deep inside the maze to discourage interior dives
+                    const PENALTY_PER_CELL = 1.0;
+                    score -= distToBorder * PENALTY_PER_CELL;
+
+                    return Math.max(0, score);
+                }
+
+                function animateSearch() {
+                    if (stack.length === 0 || isSearching === false) {
+                        // if any solution markers present, treat as success
+                        if (maze.flat().includes(7) || maze.flat().includes(3)) {
+                            maze[startRow][startCol] = 2;
+                            maze[endRow][endCol] = 3;
+                            drawMaze(maze, ctx, CELL_SIZE);
+                            showSearchResults();
+                            finishSearch();
+                            notify('Path found!', 'success', 3500);
+                            return;
+                        }
+                        finishSearch();
+                        notifyNoPathFound();
+                        maze[startRow][startCol] = 2;
+                        drawMaze(maze, ctx, CELL_SIZE);
+                        return;
+                    }
+
+                    const { row, col, path } = stack.pop();
+                    if (!(row === startRow && col === startCol) && !(row === endRow && col === endCol)) {
+                        maze[row][col] = 4; // processed
+                    }
+                    drawMaze(maze, ctx, CELL_SIZE);
+
+                    if (row === endRow && col === endCol) {
+                        maze[startRow][startCol] = 2;
+                        maze[endRow][endCol] = 3;
+                        for (let p of path) {
+                            if (!(p.row === startRow && p.col === startCol) && !(p.row === endRow && p.col === endCol)) {
+                                maze[p.row][p.col] = 7;
+                            }
+                        }
+                        drawMaze(maze, ctx, CELL_SIZE);
+                        showSearchResults();
+                        finishSearch();
+                        notify('Path found!', 'success', 3500);
+                        return;
+                    }
+
+                    const neighbors = [
+                        { r: row - 1, c: col },
+                        { r: row + 1, c: col },
+                        { r: row, c: col - 1 },
+                        { r: row, c: col + 1 }
+                    ];
+
+                    // filter valid and unvisited neighbors
+                    let cand = neighbors.filter(n => n.r >= 0 && n.r < rows && n.c >= 0 && n.c < cols && isValidCell(n.r, n.c, maze) && !visited[n.r][n.c]);
+                    // sort by border score descending so border-adjacent cells explored first
+                    cand.sort((a, b) => neighborBorderScore(b.r, b.c) - neighborBorderScore(a.r, a.c));
+
+                    for (const n of cand) {
+                        visited[n.r][n.c] = true;
+                        const newPath = [...path, { row: n.r, col: n.c }];
+                        stack.push({ row: n.r, col: n.c, path: newPath });
+                        animationFrameId = setTimeout(animateSearch, speed);
+                        if (isSearching) {
+                            maze[n.r][n.c] = 6; // current
+                            drawMaze(maze, ctx, CELL_SIZE);
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
                 animateSearch();
             }
 
@@ -2262,6 +2393,8 @@
                         solveMazeDFS2(maze, startRow, startCol, endRow, endCol, speed);
                     } else if (mode === 'dfs_iterative') {
                         solveMazeDFS(maze, startRow, startCol, endRow, endCol, speed);
+                    } else if (mode === 'dfs_border') {
+                        solveMazeDFSBorder(maze, startRow, startCol, endRow, endCol, speed);
                     } else if (mode === 'dfs3') {
                         solveMazeDFS3(maze, startRow, startCol, endRow, endCol, speed);
                     } else if (mode === 'dfs22') {
