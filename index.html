@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Amazing Mazeing</title>
-    <meta name="description" content="Explore mazes using BFS and DFS algorithms.">
+    <title>Amazing Mazeing - Algorithm Visualizer</title>
+    <meta name="description" content="Explore and compare maze solving algorithms: BFS, DFS, and FLOOD.">
     <meta name="author" content="Rafael Aznar">
     <meta name="robots" content="index, follow">
     <link rel="icon"
@@ -273,32 +273,109 @@
             font-size: 1.3em;
             color: var(--text-light);
         }
+
+        /* --- Algorithm Info Styles --- */
+        .algorithm-info {
+            background-color: var(--white);
+            border-radius: 8px;
+            padding: 1.5em;
+            margin-bottom: 2em;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .algorithm-info h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.8em;
+            font-size: 1.3em;
+        }
+
+        .algorithm-info p {
+            color: var(--text-color);
+            line-height: 1.6;
+            margin-bottom: 0.5em;
+        }
+
+        .algorithm-info ul {
+            margin-left: 1.5em;
+            color: var(--text-color);
+            line-height: 1.8;
+        }
+
+        .algorithm-info .algo-highlight {
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+
+        .results-container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 2em;
+        }
+
+        .result-card {
+            background-color: #bdc3c7;
+            padding: 15px 20px;
+            border-radius: 8px;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .result-card h3 {
+            color: #747474;
+            font-size: 0.9em;
+            margin-bottom: 0.5em;
+            font-weight: 500;
+        }
+
+        .result-card .result-value {
+            font-size: 3em;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .algorithm-info {
+                padding: 1em;
+            }
+            
+            .result-card .result-value {
+                font-size: 2.5em;
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1 id="main_title">Amazing Maze</h1>
-        <h2 id="subtitle">Learn BFS & DFS</h2>
+        <h1 id="main_title">Amazing Mazeing</h1>
+        <h2 id="subtitle">Visualize & Compare Pathfinding Algorithms</h2>
 
         <div class="settings-group" id="settings_group">
             <div class="control-group">
-                <label for="height_slider">Maze dimension</label>
+                <label for="height_slider">Maze Size</label>
                 <input type="range" id="height_slider" min="35" max="95" value="45" step="10">
-                <span id="height_value">550 sq</span>
+                <span id="height_value">450 cells</span>
             </div>
             <div class="control-group">
-                <label for="mode_selector">Search mode</label>
+                <label for="mode_selector">Algorithm</label>
                 <div id="mode_selector_options">
                     <select id="mode_selector">
-                        <option value="flood">FLOOD</option>
-                        <option value="bfs">BFS</option>
-                        <option value="dfs">DFS</option>
+                        <option value="bfs">BFS - Breadth First Search</option>
+                        <option value="dfs">DFS - Depth First Search</option>
+                        <option value="astar">A* - A* (Manhattan)</option>
+                        <option value="random">Random Greedy - Greedy Best-First (random tie-break)</option>
+                        <option value="flood">FLOOD - BFS with Path</option>
                     </select>
                 </div>
             </div>
             <div class="control-group">
-                <label for="speed_slider">Speed</label>
+                <label for="speed_slider">Animation Speed</label>
                 <input type="range" id="speed_slider" min="1" max="1001" value="1" step="100">
                 <span id="speed_value">1 ms</span>
             </div>
@@ -308,24 +385,33 @@
         </div>
 
         <div class="button-group" id="button_group">
-            <button class="app-button hot-yellow" id="maze_creation_button">Create maze</button>
-            <button class="app-button hot-green" id="start_button" disabled>Start</button>
-            <button class="app-button hot-red" id="stop_button" disabled>Stop</button>
-            <button class="app-button hot-blue" id="reset_search_button" disabled>Reset search</button>
-            <button class="app-button hot-blue" id="reset_button" disabled>Reset</button>
+            <button class="app-button hot-yellow" id="maze_creation_button">Generate Maze</button>
+            <button class="app-button hot-green" id="start_button" disabled>Start Search</button>
+            <button class="app-button hot-red" id="stop_button" disabled>Pause</button>
+            <button class="app-button hot-blue" id="reset_search_button" disabled>Clear Search</button>
+        </div>
+
+        <!-- Algorithm Information -->
+        <div class="algorithm-info" id="algorithm_info">
+            <h3>Select an algorithm to see its description</h3>
+            <p>Choose an algorithm from the dropdown above and learn how it explores the maze to find the path from start (cyan) to end (green).</p>
         </div>
 
         <canvas id="maze"></canvas>
 
-        <div id="results_pane"
-            style="display:flex;flex-direction: row; flex-wrap: wrap;align-items: flex-start;flex-wrap: nowrap;height: fit-content;width: 100%;">
-            <div style="margin:0 5px; background-color: #bdc3c7;padding: 10px; border-radius: 5px;width: fit-content">
-                <h2 style="color:#747474">Solution Length:</h2>
-                <h1 id="solution_length_number" style="font-size: 4em !important;color: #3498db;"></h1>
+        <!-- Results Display -->
+        <div class="results-container" id="results_pane" style="display:none;">
+            <div class="result-card">
+                <h3>Path Length</h3>
+                <div class="result-value" id="solution_length_number">-</div>
             </div>
-            <div style="margin:0 5px; background-color: #bdc3c7;padding: 10px; border-radius: 5px;width: fit-content">
-                <h2 style="color:#747474">Solution Length:</h2>
-                <h1 id="solution_explored" style="font-size: 4em !important;color: #3498db;"></h1>
+            <div class="result-card">
+                <h3>Cells Explored</h3>
+                <div class="result-value" id="cells_explored">-</div>
+            </div>
+            <div class="result-card">
+                <h3>Time (ms)</h3>
+                <div class="result-value" id="time_ms">-</div>
             </div>
         </div>
 
@@ -333,7 +419,7 @@
         <div class="line"></div>
         <div class="footer">
             <p>Created by Rafael Aznar (MIT License)</p>
-            <p>github: </p>
+            <p>GitHub: <a href="https://github.com/rafaelaznar/amazing-mazeing" target="_blank" style="color: var(--primary-color);">amazing-mazeing</a></p>
         </div>
     </div>
 
@@ -352,12 +438,134 @@
             const mazeCreationButton = document.getElementById('maze_creation_button');
             const startButton = document.getElementById('start_button');
             const stopButton = document.getElementById('stop_button');
-            const resetButton = document.getElementById('reset_button');
+            // The original "New Maze" button was removed (we already have Generate Maze).
+            // Keep a `resetButton` alias pointing to the Generate Maze button so existing code
+            // that enables/disables `resetButton` continues to work. We want the
+            // Generate Maze button to always be active, so wrap the element in a Proxy
+            // that ignores attempts to disable it (assigning disabled = true).
+            mazeCreationButton.disabled = false; // ensure enabled at start
+            const resetButton = new Proxy(mazeCreationButton, {
+                set(target, prop, value) {
+                    if (prop === 'disabled') {
+                        // Allow disabling only if a search is in progress
+                        if (value === true && isSearching) {
+                            target.disabled = true;
+                        } else if (value === false) {
+                            target.disabled = false;
+                        }
+                        // otherwise ignore attempts to disable when not searching
+                        return true;
+                    }
+                    try { target[prop] = value; } catch (e) { /* ignore */ }
+                    return true;
+                },
+                get(target, prop) {
+                    const v = target[prop];
+                    return typeof v === 'function' ? v.bind(target) : v;
+                }
+            });
+            // Also guard against code that uses setAttribute('disabled', ...) or similar by
+            // observing attribute changes and re-enabling the button immediately.
+            const _mo = new MutationObserver(() => {
+                // If some code sets the disabled attribute, allow it only when a search is running
+                if (!isSearching) {
+                    if (mazeCreationButton.disabled) mazeCreationButton.disabled = false;
+                    if (mazeCreationButton.hasAttribute && mazeCreationButton.hasAttribute('disabled')) {
+                        mazeCreationButton.removeAttribute('disabled');
+                    }
+                }
+            });
+            _mo.observe(mazeCreationButton, { attributes: true, attributeFilter: ['disabled'] });
             const resetSearchButton = document.getElementById('reset_search_button');
             const container = document.querySelector('.container');
             const resultsPane = document.getElementById('results_pane');
-            const solutionLengthNumber = document.getElementById("solution_length_number")
-            // 
+            const solutionLengthNumber = document.getElementById("solution_length_number");
+            const cellsExploredDisplay = document.getElementById("cells_explored");
+            const algorithmInfo = document.getElementById('algorithm_info');
+            
+            // Algorithm descriptions
+            const algorithmDescriptions = {
+                'bfs': {
+                    title: 'BFS - Breadth First Search',
+                    description: 'BFS explores the maze level by level, visiting all neighbors at the current distance before moving further.',
+                    features: [
+                        '<span class="algo-highlight">Guarantees shortest path:</span> Always finds the solution with minimum steps',
+                        '<span class="algo-highlight">Strategy:</span> Uses a queue (FIFO - First In First Out)',
+                        '<span class="algo-highlight">Memory:</span> Moderate - stores all nodes at current level',
+                        '<span class="algo-highlight">Best for:</span> Finding optimal paths in unweighted graphs'
+                    ]
+                },
+                'dfs': {
+                    title: 'DFS - Depth First Search',
+                    description: 'DFS explores as far as possible along each branch before backtracking, diving deep into the maze.',
+                    features: [
+                        '<span class="algo-highlight">Path quality:</span> May not find the shortest path',
+                        '<span class="algo-highlight">Strategy:</span> Uses recursion/stack (LIFO - Last In First Out)',
+                        '<span class="algo-highlight">Memory:</span> Lower average usage than BFS',
+                        '<span class="algo-highlight">Best for:</span> Exploring all possibilities, puzzle solving'
+                    ]
+                },
+                'flood': {
+                    title: 'FLOOD - BFS with Path Storage',
+                    description: 'Similar to BFS but stores the complete path at each step, making path reconstruction immediate.',
+                    features: [
+                        '<span class="algo-highlight">Guarantees shortest path:</span> Yes, like standard BFS',
+                        '<span class="algo-highlight">Strategy:</span> Queue-based with full path in each element',
+                        '<span class="algo-highlight">Memory:</span> High - stores complete path for each position',
+                        '<span class="algo-highlight">Best for:</span> Simple implementation, educational purposes'
+                    ]
+                }
+                ,
+                'astar': {
+                    title: 'A* - A* Search (Manhattan Heuristic)',
+                    description: 'A* combines best-first search with a cost heuristic to efficiently find short paths. We use Manhattan distance as the heuristic.',
+                    features: [
+                        '<span class="algo-highlight">Guarantees shortest path:</span> Yes if the heuristic is admissible (Manhattan is admissible for 4-directional grids)',
+                        '<span class="algo-highlight">Strategy:</span> Priority queue (min-heap) ordered by f = g + h',
+                        '<span class="algo-highlight">Memory:</span> Moderate to high depending on explored nodes',
+                        '<span class="algo-highlight">Best for:</span> Fast optimal pathfinding on grids with Manhattan distance'
+                    ]
+                }
+                ,
+                'random': {
+                    title: 'Random Greedy - Greedy Best-First (Manhattan + random tie-break)',
+                    description: 'Greedy best-first search guided by the Manhattan heuristic. When multiple nodes have the same heuristic value, the algorithm breaks ties randomly to produce varied paths.',
+                    features: [
+                        '<span class="algo-highlight">Guarantees shortest path:</span> Not guaranteed (heuristic-only), may find short paths quickly',
+                        '<span class="algo-highlight">Strategy:</span> Priority queue ordered by h (Manhattan); ties broken randomly',
+                        '<span class="algo-highlight">Memory:</span> Moderate - stores open set and came-from map',
+                        '<span class="algo-highlight">Best for:</span> Fast, exploratory search where varied solutions are interesting'
+                    ]
+                }
+            };
+            
+            let cellsExplored = 0;
+            let searchStartTime = 0;
+            const timeDisplay = document.getElementById('time_ms');
+
+            function showSearchResults() {
+                const duration = Date.now() - searchStartTime;
+                timeDisplay.innerText = duration;
+                const solutionLength = maze.flat().filter(cell => cell === 7).length;
+                // include discovered (8) as explored/discovered for counting
+                const exploredCells = maze.flat().filter(cell => cell === 4 || cell === 5 || cell === 7 || cell === 8).length;
+                solutionLengthNumber.innerText = solutionLength;
+                cellsExploredDisplay.innerText = exploredCells;
+                resultsPane.style.display = 'flex';
+                // Reset start button text and disable it until user generates a new maze or clears search
+                startButton.textContent = 'Start Search';
+                startButton.disabled = true;
+            }
+
+            function finishSearch() {
+                // shared UI updates when a search finishes (success or failure)
+                isSearching = false;
+                startButton.textContent = 'Start Search';
+                startButton.disabled = true; // disabled until user generates/clears
+                stopButton.disabled = true;
+                resetSearchButton.disabled = false;
+                resetButton.disabled = false; // alias to generate maze button
+            }
 
 
             // --- Constants ---
@@ -463,6 +671,59 @@
                                 }
                             }
 
+                        }
+                    }
+                }
+
+                // Post-process: for every non-border cell that is white (1) and whose
+                // four orthogonal neighbors are all walls (0), open one random
+                // non-border neighbor (set it to white). This avoids isolated white
+                // cells surrounded entirely by walls.
+                for (let i = 1; i < maze.length - 1; i++) {
+                    for (let j = 1; j < maze[i].length - 1; j++) {
+                        if (maze[i][j] === 1) {
+                            const neighbors = [
+                                { r: i - 1, c: j },
+                                { r: i + 1, c: j },
+                                { r: i, c: j - 1 },
+                                { r: i, c: j + 1 }
+                            ];
+                            // Check all four orthogonal neighbors are walls (0)
+                            const allWalls = neighbors.every(n => maze[n.r][n.c] === 0);
+                            if (allWalls) {
+                                // Choose among orthogonal neighbors that are strictly interior (not on border)
+                                const candidates = neighbors.filter(n => n.r > 0 && n.r < maze.length - 1 && n.c > 0 && n.c < maze[0].length - 1);
+                                if (candidates.length > 0) {
+                                    const pick = candidates[Math.floor(Math.random() * candidates.length)];
+                                    maze[pick.r][pick.c] = 1; // open that neighbor
+                                }
+                            } else {
+                                // Additionally, check the 8 surrounding cells (including diagonals).
+                                // If exactly 7 of the 8 neighbors are walls (0), open a random
+                                // orthogonal interior neighbor to avoid near-complete isolation.
+                                const neigh8 = [
+                                    { r: i - 1, c: j - 1 }, { r: i - 1, c: j }, { r: i - 1, c: j + 1 },
+                                    { r: i, c: j - 1 },                       { r: i, c: j + 1 },
+                                    { r: i + 1, c: j - 1 }, { r: i + 1, c: j }, { r: i + 1, c: j + 1 }
+                                ];
+                                let wallCount = 0;
+                                for (const n of neigh8) {
+                                    if (n.r >= 0 && n.r < maze.length && n.c >= 0 && n.c < maze[0].length) {
+                                        if (maze[n.r][n.c] === 0) wallCount++;
+                                    } else {
+                                        // treat out-of-bounds as walls
+                                        wallCount++;
+                                    }
+                                }
+                                if (wallCount === 7) {
+                                    // pick a random orthogonal interior neighbor
+                                    const ortho = neighbors.filter(n => n.r > 0 && n.r < maze.length - 1 && n.c > 0 && n.c < maze[0].length - 1);
+                                    if (ortho.length > 0) {
+                                        const pick2 = ortho[Math.floor(Math.random() * ortho.length)];
+                                        maze[pick2.r][pick2.c] = 1;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -700,10 +961,11 @@
                 // initilize queue to store the path to the cells that are being explored
                 const queue = [{ row: startRow, col: startCol, path: [{ row: startRow, col: startCol }] }];
                 function animateSearch() {
-                    if (queue.length === 0) { // stop condition: there are no more cells to explore
+                        if (queue.length === 0) { // stop condition: there are no more cells to explore
                         drawMaze(maze, ctx, CELL_SIZE);
                         setState(false);
-                        alert("¡Camino no encontrado!");
+                        finishSearch();
+                        alert("No path found!");
                     } else {
                         const { row, col, path } = queue.shift(); // get the next cell to explore                        
                         if (row !== startRow && col !== startCol) { // if the cell is not the initial cell, mark it as explored
@@ -723,7 +985,9 @@
                             }
                             drawMaze(maze, ctx, CELL_SIZE);
                             setState(false);
-                            alert("¡Camino encontrado!");
+                            showSearchResults();
+                            finishSearch();
+                            alert("Path found!");
                         } else { // if the cell is not the end cell, explore its neighbors
                             const neighbors = getNeighbors(row, col);
                             for (const neighbor of neighbors) {
@@ -772,22 +1036,19 @@
                 maze[startRow][startCol] = 6; // Marca la celda actual
 
                 function animateSearch() {
-                    if (stack.length === 0 || isSearching === false) {
-                        if (isSearching) {
-                            alert("¡Camino no encontrado!");
-                        }
-                        maze[startRow][startCol] = 2;
-                        drawMaze(maze, ctx, CELL_SIZE);
-                        isSearching = false;
-                        startButton.disabled = false;
-                        stopButton.disabled = true;
-                        resetButton.disabled = false;
-                        resetSearchButton.disabled = false;
+                        if (stack.length === 0 || isSearching === false) {
+                            finishSearch();
+                            alert("No path found!");
+                            maze[startRow][startCol] = 2;
+                            drawMaze(maze, ctx, CELL_SIZE);
                         return;
                     }
 
                     const { row, col, path } = stack.pop();
-                    maze[row][col] = 6; // Marca la celda actual
+                    // mark processed node (if not start/end)
+                    if (!(row === startRow && col === startCol) && !(row === endRow && col === endCol)) {
+                        maze[row][col] = 4; // processed
+                    }
                     drawMaze(maze, ctx, CELL_SIZE);
 
                     if (row === endRow && col === endCol) {
@@ -798,12 +1059,10 @@
                             maze[p.row][p.col] = 4; // Marca el camino
                         }
                         drawMaze(maze, ctx, CELL_SIZE);
-                        isSearching = false;
-                        startButton.disabled = false;
-                        stopButton.disabled = true;
-                        resetButton.disabled = false;
-                        resetSearchButton.disabled = false;
-                        alert("¡Camino encontrado!");
+                        // finalize UI and show results
+                        showSearchResults();
+                        finishSearch();
+                        alert("Path found!");
                         return;
                     }
 
@@ -827,12 +1086,9 @@
                         maze[row][col] = 5; // Marca la celda como retroceso
                         drawMaze(maze, ctx, CELL_SIZE);
                         if (stack.length === 0) {
-                            isSearching = false;
-                            startButton.disabled = false;
-                            stopButton.disabled = true;
-                            resetButton.disabled = false;
-                            resetSearchButton.disabled = false;
-                            alert("¡Camino no encontrado!");
+                            // no more nodes and no path
+                            finishSearch();
+                            alert("No path found!");
                         }
                     } else {
                         for (const neighbor of neighbors) {
@@ -860,12 +1116,8 @@
                                         maze[row][col] = 5; // Marca la celda como retroceso
                                         drawMaze(maze, ctx, CELL_SIZE);
                                         if (stack.length === 0) {
-                                            isSearching = false;
-                                            startButton.disabled = false;
-                                            stopButton.disabled = true;
-                                            resetButton.disabled = false;
-                                            resetSearchButton.disabled = false;
-                                            alert("¡Camino no encontrado!");
+                                            finishSearch();
+                                            alert("No path found!");
                                         }
                                         break;
 
@@ -898,7 +1150,7 @@
                 //visited[startRow][startCol] = true;
                 function animateSearch() {
                     // condición de parada
-                    if (queue.length === 0 || isSearching === false) {
+                            if (queue.length === 0 || !isSearching) {
                         maze[startRow][startCol] = 2;
                         maze[endRow][endCol] = 3;
                         drawMaze(maze, ctx, CELL_SIZE);
@@ -908,7 +1160,7 @@
                         resetSearchButton.disabled = false;
                         if (isSearching) {
                             isSearching = false;
-                            alert("¡Camino no encontrado!");
+                            alert("No path found!");
                         }
 
                     } else {
@@ -934,12 +1186,10 @@
                             maze[startRow][startCol] = 2;
                             maze[endRow][endCol] = 3;
                             drawMaze(maze, ctx, CELL_SIZE);
-                            isSearching = false;
-                            startButton.disabled = false;
-                            stopButton.disabled = true;
-                            resetButton.disabled = false;
-                            resetSearchButton.disabled = false;
-                            alert("¡Camino encontrado!");
+                            // finalize UI and show results
+                            finishSearch();
+                            showSearchResults();
+                            alert("Path found!");
                         } else {
 
                             const neighbors = [
@@ -1048,18 +1298,19 @@
                     maze[startRow][startCol] = 2;
                     maze[endRow][endCol] = 3;
                     drawMaze(maze, ctx, CELL_SIZE);
-                    startButton.disabled = false;
-                    stopButton.disabled = true;
-                    resetButton.disabled = false;
-                    resetSearchButton.disabled = false;
+                    // finalize UI: if no solution found, call finishSearch(); otherwise show results and finish
                     if (!len && !maze.flat().includes(3)) {
+                        finishSearch();
                         console.log("No solution found.");
                     } else {
-                        // print la la longitud de la solucion en solution_length
+                        // Calculate and display results
                         const solutionLength = maze.flat().filter(cell => cell === 7).length;
-                        // show solution length
+                        const exploredCells = maze.flat().filter(cell => cell === 4 || cell === 5 || cell === 7).length;
                         solutionLengthNumber.innerText = solutionLength;
-                        resultsPane.style.display = "block";
+                        cellsExploredDisplay.innerText = exploredCells;
+                        resultsPane.style.display = "flex";
+                        showSearchResults();
+                        finishSearch();
                     }
                 }
 
@@ -1081,16 +1332,16 @@
                         const exploreNext = () => {
                             if (queue.length === 0) {
                                 // No solution found
-                                startButton.disabled = false;
-                                stopButton.disabled = true;
-                                resetButton.disabled = false;
-                                resetSearchButton.disabled = false;
+                                finishSearch();
                                 resolve(false);
                                 return;
                             }
 
                             let { row, col, path } = queue.shift();
-                            maze[row][col] = 8; // Mark as visiting
+                            // mark the current node as processed (if not start/end)
+                            if (!(row === startRow && col === startCol) && !(row === endRow && col === endCol)) {
+                                maze[row][col] = 4; // processed / explored
+                            }
                             drawMaze(maze, ctx, CELL_SIZE);
 
                             if (row === endRow && col === endCol) {
@@ -1101,10 +1352,8 @@
                                 maze[startRow][startCol] = 2;
                                 maze[endRow][endCol] = 3;
                                 drawMaze(maze, ctx, CELL_SIZE);
-                                startButton.disabled = false;
-                                stopButton.disabled = true;
-                                resetButton.disabled = false;
-                                resetSearchButton.disabled = false;
+                                showSearchResults();
+                                finishSearch();
                                 resolve(true);
                                 return;
                             }
@@ -1120,6 +1369,10 @@
                                 const { row: nextRow, col: nextCol } = neighbor;
                                 if (isValidCell(nextRow, nextCol, maze) && !visited[nextRow + ',' + nextCol]) {
                                     visited[nextRow + ',' + nextCol] = true;
+                                    // mark as discovered
+                                    if (!(nextRow === startRow && nextCol === startCol) && !(nextRow === endRow && nextCol === endCol)) {
+                                        maze[nextRow][nextCol] = 8; // discovered
+                                    }
                                     queue.push({ row: nextRow, col: nextCol, path: [...path, { row: nextRow, col: nextCol }] });
                                 }
                             }
@@ -1143,14 +1396,219 @@
 
                     if (!solved && !maze.flat().includes(3)) {
                         console.log("No solution found.");
-                        startButton.disabled = false;
-                        stopButton.disabled = true;
-                        resetButton.disabled = false;
-                        resetSearchButton.disabled = false;
+                        finishSearch();
+                    } else if (solved) {
+                        showSearchResults();
+                        finishSearch();
+                        alert('Path found!');
                     }
                 }
 
                 startSolving();
+            }
+
+            // A* search with Manhattan heuristic
+            function manhattan(aRow, aCol, bRow, bCol) {
+                return Math.abs(aRow - bRow) + Math.abs(aCol - bCol);
+            }
+
+            function solveMazeAStar(maze, startRow, startCol, endRow, endCol, speed) {
+                // We'll implement a simple priority queue using an array and sort for simplicity
+                const rows = maze.length;
+                const cols = maze[0].length;
+                const openSet = [];
+                const cameFrom = {};
+                const gScore = Array(rows).fill(null).map(() => Array(cols).fill(Infinity));
+                const fScore = Array(rows).fill(null).map(() => Array(cols).fill(Infinity));
+
+                gScore[startRow][startCol] = 0;
+                fScore[startRow][startCol] = manhattan(startRow, startCol, endRow, endCol);
+                openSet.push({ row: startRow, col: startCol, f: fScore[startRow][startCol] });
+
+                // use global animationFrameId so stop/pause works consistently
+
+                function reconstructPath(current) {
+                    const path = [];
+                    let key = current.row + ',' + current.col;
+                    while (key && cameFrom[key]) {
+                        const [r, c] = key.split(',').map(Number);
+                        path.push({ row: r, col: c });
+                        key = cameFrom[key];
+                    }
+                    path.push({ row: startRow, col: startCol });
+                    return path.reverse();
+                }
+
+                function step() {
+                    if (openSet.length === 0 || isSearching === false) {
+                        // no path or stopped
+                        if (isSearching) {
+                            alert('No path found!');
+                        }
+                        finishSearch();
+                        return;
+                    }
+
+                    // sort openSet by f ascending (small size so OK)
+                    openSet.sort((a, b) => a.f - b.f);
+                    const current = openSet.shift();
+                    const { row, col } = current;
+
+                    // mark current for visualization (don't overwrite start/end)
+                    if (!(row === startRow && col === startCol) && !(row === endRow && col === endCol)) {
+                        maze[row][col] = 6; // current
+                    }
+                    drawMaze(maze, ctx, CELL_SIZE);
+
+                    if (row === endRow && col === endCol) {
+                        // found
+                        const path = reconstructPath({ row, col });
+                        for (let p of path) {
+                            if (!(p.row === startRow && p.col === startCol) && !(p.row === endRow && p.col === endCol)) {
+                                maze[p.row][p.col] = 7;
+                            }
+                        }
+                        drawMaze(maze, ctx, CELL_SIZE);
+                        showSearchResults();
+                        finishSearch();
+                        alert('Path found!');
+                        return;
+                    }
+
+                    // neighbors
+                    const neighbors = [
+                        { row: row - 1, col: col },
+                        { row: row + 1, col: col },
+                        { row: row, col: col - 1 },
+                        { row: row, col: col + 1 },
+                    ];
+
+                    for (const n of neighbors) {
+                        const nr = n.row;
+                        const nc = n.col;
+                        if (!isValidCell(nr, nc, maze) && !(nr === endRow && nc === endCol)) continue;
+                        const tentativeG = gScore[row][col] + 1;
+                        if (tentativeG < gScore[nr][nc]) {
+                            cameFrom[nr + ',' + nc] = row + ',' + col;
+                            gScore[nr][nc] = tentativeG;
+                            fScore[nr][nc] = tentativeG + manhattan(nr, nc, endRow, endCol);
+                            // add to openSet if not present
+                            if (!openSet.find(e => e.row === nr && e.col === nc)) {
+                                openSet.push({ row: nr, col: nc, f: fScore[nr][nc] });
+                                // mark as discovered
+                                if (!(nr === startRow && nc === startCol) && !(nr === endRow && nc === endCol)) {
+                                    maze[nr][nc] = 8; // exploring border
+                                }
+                            }
+                        }
+                    }
+
+                    // mark current as explored (if not start/end)
+                    if (!(row === startRow && col === startCol) && !(row === endRow && col === endCol)) {
+                        maze[row][col] = 4;
+                    }
+                    animationFrameId = setTimeout(step, speed);
+                }
+
+                step();
+            }
+
+            // Random Greedy: greedy best-first with Manhattan heuristic and random tie-breaking
+            function solveMazeRandomGreedy(maze, startRow, startCol, endRow, endCol, speed) {
+                const rows = maze.length;
+                const cols = maze[0].length;
+                const openSet = [];
+                const cameFrom = {};
+                const visited = Array(rows).fill(null).map(() => Array(cols).fill(false));
+
+                function pushOpen(row, col) {
+                    const h = manhattan(row, col, endRow, endCol);
+                    openSet.push({ row, col, h });
+                }
+
+                visited[startRow][startCol] = true;
+                pushOpen(startRow, startCol);
+
+                function reconstruct(current) {
+                    const path = [];
+                    let key = current.row + ',' + current.col;
+                    while (key && cameFrom[key]) {
+                        const [r, c] = key.split(',').map(Number);
+                        path.push({ row: r, col: c });
+                        key = cameFrom[key];
+                    }
+                    path.push({ row: startRow, col: startCol });
+                    return path.reverse();
+                }
+
+                function step() {
+                    if (openSet.length === 0 || isSearching === false) {
+                        if (isSearching) alert('No path found!');
+                        finishSearch();
+                        return;
+                    }
+
+                    // choose the node(s) with minimal h
+                    let minH = Math.min(...openSet.map(e => e.h));
+                    const candidates = openSet.filter(e => e.h === minH);
+                    // random tie-break among candidates
+                    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+                    // remove chosen from openSet (first occurrence)
+                    const idx = openSet.findIndex(e => e.row === chosen.row && e.col === chosen.col && e.h === chosen.h);
+                    if (idx >= 0) openSet.splice(idx, 1);
+
+                    const { row, col } = chosen;
+
+                    if (!(row === startRow && col === startCol) && !(row === endRow && col === endCol)) {
+                        maze[row][col] = 6; // current
+                    }
+                    drawMaze(maze, ctx, CELL_SIZE);
+
+                    if (row === endRow && col === endCol) {
+                        const path = reconstruct({ row, col });
+                        for (let p of path) {
+                            if (!(p.row === startRow && p.col === startCol) && !(p.row === endRow && p.col === endCol)) {
+                                maze[p.row][p.col] = 7;
+                            }
+                        }
+                        drawMaze(maze, ctx, CELL_SIZE);
+                        showSearchResults();
+                        finishSearch();
+                        alert('Path found!');
+                        return;
+                    }
+
+                    const neighbors = [
+                        { row: row - 1, col: col },
+                        { row: row + 1, col: col },
+                        { row: row, col: col - 1 },
+                        { row: row, col: col + 1 },
+                    ];
+
+                    for (const n of neighbors) {
+                        const nr = n.row;
+                        const nc = n.col;
+                        if (!isValidCell(nr, nc, maze) && !(nr === endRow && nc === endCol)) continue;
+                        if (!visited[nr][nc]) {
+                            visited[nr][nc] = true;
+                            cameFrom[nr + ',' + nc] = row + ',' + col;
+                            // mark discovered
+                            if (!(nr === startRow && nc === startCol) && !(nr === endRow && nc === endCol)) {
+                                maze[nr][nc] = 8;
+                            }
+                            pushOpen(nr, nc);
+                        }
+                    }
+
+                    // mark processed
+                    if (!(row === startRow && col === startCol) && !(row === endRow && col === endCol)) {
+                        maze[row][col] = 4;
+                    }
+
+                    animationFrameId = setTimeout(step, speed);
+                }
+
+                step();
             }
 
 
@@ -1212,10 +1670,7 @@
                 maze[startRow][startCol] = 2;
                 maze[endRow][endCol] = 3;
                 drawMaze(maze, ctx, CELL_SIZE);
-                startButton.disabled = false;
-                stopButton.disabled = true;
-                resetButton.disabled = false;
-                resetSearchButton.disabled = false;
+                finishSearch();
             }
 
 
@@ -1236,15 +1691,11 @@
                 function animateSearch() {
                     if (stack.length === 0 || isSearching === false) {
                         if (isSearching) {
-                            alert("¡Camino no encontrado!");
+                            alert("No path found!");
                         }
+                        finishSearch();
                         maze[startRow][startCol] = 2;
                         drawMaze(maze, ctx, CELL_SIZE);
-                        isSearching = false;
-                        startButton.disabled = false;
-                        stopButton.disabled = true;
-                        resetButton.disabled = false;
-                        resetSearchButton.disabled = false;
                         return;
                     }
 
@@ -1260,12 +1711,10 @@
                             maze[p.row][p.col] = 4; // Marca el camino
                         }
                         drawMaze(maze, ctx, CELL_SIZE);
-                        isSearching = false;
-                        startButton.disabled = false;
-                        stopButton.disabled = true;
-                        resetButton.disabled = false;
-                        resetSearchButton.disabled = false;
-                        alert("¡Camino encontrado!");
+                        finishSearch();
+                        showSearchResults();
+                        alert("Path found!");
+                        return;
                         return;
                     }
 
@@ -1293,13 +1742,17 @@
                             startButton.disabled = false;
                             stopButton.disabled = true;
                             resetButton.disabled = false;
-                            alert("¡Camino no encontrado!");
+                            alert("No path found!");
                         }
                     } else {
                         for (const neighbor of neighbors) {
                             const { row: nextRow, col: nextCol } = neighbor;
                             if (isValidCell(nextRow, nextCol, maze) && !visited[nextRow][nextCol]) {
                                 visited[nextRow][nextCol] = true;
+                                // mark discovered
+                                if (!(nextRow === startRow && nextCol === startCol) && !(nextRow === endRow && nextCol === endCol)) {
+                                    maze[nextRow][nextCol] = 8; // discovered
+                                }
                                 const newPath = [...path, { row: nextRow, col: nextCol }];
                                 stack.unshift({ row: nextRow, col: nextCol, path: newPath });
                                 animationFrameId = setTimeout(animateSearch, speed);
@@ -1321,11 +1774,8 @@
                                         maze[row][col] = 5; // Marca la celda como retroceso
                                         drawMaze(maze, ctx, CELL_SIZE);
                                         if (stack.length === 0) {
-                                            isSearching = false;
-                                            startButton.disabled = false;
-                                            stopButton.disabled = true;
-                                            resetButton.disabled = false;
-                                            alert("¡Camino no encontrado!");
+                                            finishSearch();
+                                            alert("No path found!");
                                         }
                                         break;
 
@@ -1357,6 +1807,7 @@
              */
             function resetMaze() {
                 resultsPane.style.display = "none";
+                cellsExplored = 0;
                 isSearching = false;
                 clearTimeout(animationFrameId);
                 generateMaze();
@@ -1365,33 +1816,53 @@
                 startButton.disabled = false;
                 stopButton.disabled = true;
                 resetButton.disabled = true;
-                startButton.textContent = "Empezar";
+                resetSearchButton.disabled = true;
+                startButton.textContent = "Start Search";
             }
 
             // --- Listeners de Eventos ---
 
-            // Cambiar el tamaño del laberinto
+            // Update algorithm info display
+            function updateAlgorithmInfo(algorithm) {
+                const info = algorithmDescriptions[algorithm];
+                if (info) {
+                    algorithmInfo.innerHTML = `
+                        <h3>${info.title}</h3>
+                        <p>${info.description}</p>
+                        <ul>
+                            ${info.features.map(feature => `<li>${feature}</li>`).join('')}
+                        </ul>
+                    `;
+                }
+            }
+            
+            // Initialize with BFS info
+            updateAlgorithmInfo('bfs');
+
+            // Change maze size
             heightSlider.addEventListener('input', () => {
                 canvasWidth = parseInt(heightSlider.value * CELL_SIZE);
                 canvasHeight = parseInt(heightSlider.value * CELL_SIZE);
-                heightValueDisplay.textContent = `${canvasHeight}`;
+                const totalCells = Math.floor(canvasWidth / CELL_SIZE) * Math.floor(canvasHeight / CELL_SIZE);
+                heightValueDisplay.textContent = `${totalCells} cells`;
                 mazeCanvas.width = canvasWidth;
                 mazeCanvas.height = canvasHeight;
-                resetMaze(); // Re-genera el laberinto al cambiar el tamaño
+                resetMaze();
             });
 
-            // Cambiar la velocidad de la animación
+            // Change animation speed
             speedSlider.addEventListener('input', () => {
                 speed = parseInt(speedSlider.value);
-                speedValueDisplay.textContent = `${speed}ms`;
+                speedValueDisplay.textContent = `${speed} ms`;
             });
 
-            // Cambiar el algoritmo de búsqueda
+            // Change search algorithm
             modeSelector.addEventListener('change', () => {
                 mode = modeSelector.value;
+                updateAlgorithmInfo(mode);
             });
 
-            // Crear el laberinto
+            // Generate maze
             mazeCreationButton.addEventListener('click', () => {
                 generateMaze();
                 createEntryPoints();
@@ -1399,7 +1870,9 @@
                 startButton.disabled = false;
                 stopButton.disabled = true;
                 resetButton.disabled = true;
-                startButton.textContent = "Empezar";
+                resetSearchButton.disabled = true;
+                resultsPane.style.display = "none";
+                startButton.textContent = "Start Search";
             });
 
             // Iniciar la búsqueda del camino
@@ -1441,15 +1914,19 @@
                 }
 
                 if (!foundStart || !foundEnd) {
-                    alert("No se pudo encontrar un inicio y un fin válidos en el laberinto.");
+                    alert("Could not find valid start and end points in the maze.");
                     return;
                 }
 
+                cellsExplored = 0;
+                resultsPane.style.display = "none";
                 isSearching = true;
                 startButton.disabled = true;
                 stopButton.disabled = false;
                 resetButton.disabled = true;
-                startButton.textContent = "Buscando...";
+                resetSearchButton.disabled = true;
+                startButton.textContent = "Searching...";
+                searchStartTime = Date.now();
 
                 if (mode === 'flood') {
                     solveMazeFLOOD(maze, startRow, startCol, endRow, endCol, speed);
@@ -1458,22 +1935,27 @@
                         solveMazeBFS3(maze, startRow, startCol, endRow, endCol, speed);
                     } else if (mode === 'dfs') {
                         solveMazeDFS2(maze, startRow, startCol, endRow, endCol, speed);
+                    } else if (mode === 'astar') {
+                        solveMazeAStar(maze, startRow, startCol, endRow, endCol, speed);
+                    } else if (mode === 'random') {
+                        solveMazeRandomGreedy(maze, startRow, startCol, endRow, endCol, speed);
                     }
                 }
             });
 
-            // Detener la búsqueda
+            // Pause search
             stopButton.addEventListener('click', () => {
                 isSearching = false;
                 clearTimeout(animationFrameId);
                 startButton.disabled = false;
                 stopButton.disabled = true;
                 resetButton.disabled = false;
-                startButton.textContent = "Reanudar";
+                resetSearchButton.disabled = false;
+                startButton.textContent = "Resume";
             });
 
             resetSearchButton.addEventListener('click', () => {
-                // recorrer el maze y cambiar el color de las celdas que no sean muros a su color original
+                // Reset maze cells to original state (keep walls, start, and end)
                 for (let i = 0; i < maze.length; i++) {
                     for (let j = 0; j < maze[i].length; j++) {
                         if (maze[i][j] !== 0 && maze[i][j] !== 2 && maze[i][j] !== 3) {
@@ -1486,16 +1968,17 @@
                 startButton.disabled = false;
                 stopButton.disabled = true;
                 resetButton.disabled = false;
-                startButton.textContent = "Resolver";
+                resultsPane.style.display = "none";
+                startButton.textContent = "Start Search";
                 drawMaze(maze, ctx, CELL_SIZE);
             });
 
-            // Resetear el laberinto
+            // Reset maze completely
             resetButton.addEventListener('click', () => {
                 resetMaze();
             });
 
-            // Inicialización
+            // Initialize
             resetMaze();
         });
     </script>
